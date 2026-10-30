@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>동아리 스마트 매니저</title>
+  <style>
+    :root {
+      --primary: #4f46e5; --primary-dark: #3730a3; --ink: #0f172a;
+      --muted: #64748b; --line: #e2e8f0; --page: #f1f5f9;
+      --white: #fff; --red: #dc2626; --green: #059669; --blue: #0ea5e9;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--page); }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; border: 0; border-radius: 8px; padding: 9px 13px; font-weight: 700; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .primary { color: white; background: var(--primary); }
+    .primary:hover { background: var(--primary-dark); }
+    .dark { color: white; background: #1e293b; }
+    .danger { color: white; background: var(--red); }
+    .blue { color: white; background: var(--blue); }
+    .subtle { color: #334155; background: #e2e8f0; }
+    .app-header { background: var(--primary); color: white; padding: 16px max(20px, calc((100% - 1180px)/2)); display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+    .brand { font-size: 20px; font-weight: 800; letter-spacing: -.4px; }
+    .user-area { display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:13px; }
+    select, input, textarea { border:1px solid #cbd5e1; border-radius:8px; padding:10px; background:white; color:var(--ink); width:100%; }
+    .user-area select { width:auto; min-width:110px; padding:7px 9px; }
+    .user-area button { padding:7px 10px; font-size:12px; }
+    main { max-width:1180px; margin:22px auto; padding:0 18px 40px; }
+    .tabs { display:flex; gap:6px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:18px; }
+    .tab { background:transparent; color:#475569; border-radius:8px 8px 0 0; padding:12px 18px; }
+    .tab.active { background:var(--primary); color:white; }
+    .panel { display:none; }
+    .panel.active { display:block; }
+    .section-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:8px 0 16px; flex-wrap:wrap; }
+    h2 { font-size:18px; margin:0; }
+    .muted { color:var(--muted); }
+    .cards { display:grid; gap:12px; }
+    .card { background:white; border:1px solid var(--line); border-radius:12px; padding:17px; box-shadow:0 1px 2px #0f172a08; }
+    .card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+    .meta { color:var(--primary); font-size:12px; font-weight:700; margin-bottom:6px; }
+    .card h3 { margin:0 0 6px; font-size:17px; }
+    .description { color:var(--muted); white-space:pre-wrap; font-size:13px; margin:4px 0 12px; }
+    .option-row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 0; border-top:1px solid #f1f5f9; }
+    .option-label { display:flex; align-items:center; gap:9px; min-width:0; }
+    .option-label input { width:auto; accent-color:var(--primary); }
+    .vote-count { color:var(--muted); font-size:12px; text-align:right; }
+    .card-actions { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:13px; flex-wrap:wrap; }
+    .action-group { display:flex; gap:7px; }
+    .empty { background:white; border:1px dashed #cbd5e1; border-radius:12px; text-align:center; padding:38px 16px; color:var(--muted); }
+    .key-state { font-size:18px; font-weight:800; margin-bottom:15px; }
+    .key-info { line-height:2; color:#334155; margin-bottom:18px; white-space:pre-line; }
+    .key-buttons { display:flex; gap:9px; flex-wrap:wrap; }
+    .notice.auto { background:#eef2ff; }
+    .notice-content { white-space:pre-wrap; line-height:1.65; }
+    .subtabs { display:flex; gap:6px; margin:12px 0; }
+    .subtab { background:#e2e8f0; color:#334155; }
+    .subtab.active { background:#334155; color:white; }
+    .table-wrap { overflow-x:auto; background:white; border:1px solid var(--line); border-radius:10px; }
+    table { width:100%; border-collapse:collapse; min-width:520px; }
+    th, td { padding:12px; text-align:left; border-bottom:1px solid var(--line); font-size:13px; }
+    th { background:#f8fafc; color:#475569; }
+    tr:last-child td { border-bottom:0; }
+    .winner { display:inline-block; margin-top:8px; background:#eef2ff; color:var(--primary); font-weight:800; padding:7px 10px; border-radius:7px; font-size:13px; }
+    .modal-backdrop { position:fixed; inset:0; background:#0f172a88; display:none; align-items:center; justify-content:center; padding:16px; z-index:10; }
+    .modal-backdrop.show { display:flex; }
+    .modal { background:white; border-radius:14px; width:min(100%, 520px); max-height:90vh; overflow:auto; padding:22px; box-shadow:0 20px 60px #0003; }
+    .modal h2 { margin-bottom:18px; }
+    .field { margin:12px 0; }
+    .field label { display:block; font-size:13px; font-weight:700; margin-bottom:6px; }
+    textarea { min-height:115px; resize:vertical; }
+    .inline-fields { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+    .hint { font-size:12px; color:var(--muted); margin-top:12px; line-height:1.5; }
+    @media (max-width:600px) {
+      .app-header { align-items:flex-start; }
+      .brand { width:100%; }
+      main { margin-top:14px; padding-left:12px; padding-right:12px; }
+      .tab { padding:10px 11px; font-size:13px; }
+      .inline-fields { grid-template-columns:1fr; gap:0; }
+      .card { padding:14px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">동아리 스마트 매니저</div>
+    <div class="user-area">
+      <label for="currentUser">현재 접속자:</label>
+      <select id="currentUser" aria-label="현재 접속자"></select>
+      <button id="addMember" style="background:#3730a3;color:white">+ 추가</button>
+      <button id="removeMember" style="background:#991b1b;color:white">− 삭제</button>
+    </div>
+  </header>
+
+  <main>
+    <nav class="tabs" aria-label="주요 메뉴">
+      <button class="tab active" data-tab="votes">투표</button>
+      <button class="tab" data-tab="keys">열쇠 관리</button>
+      <button class="tab" data-tab="notices">공지사항</button>
+      <button class="tab" data-tab="history">기록 / 히스토리</button>
+    </nav>
+
+    <section id="panel-votes" class="panel active">
+      <div class="section-head"><h2>진행 중인 투표</h2><button class="primary" id="createVote">+ 새 투표 만들기</button></div>
+      <div id="activeVotes" class="cards"></div>
+    </section>
+
+    <section id="panel-keys" class="panel">
+      <div class="section-head"><h2>열쇠 관리</h2></div>
+      <div class="card">
+        <div id="keyStatus" class="key-state"></div>
+        <div id="keyInfo" class="key-info"></div>
+        <div class="key-buttons">
+          <button class="primary" id="checkoutKey">열쇠 수령 (사용 등록)</button>
+          <button class="blue" id="returnKey">열쇠 반납 처리</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-notices" class="panel">
+      <div class="section-head"><h2>공지사항 및 결정 사항</h2><button class="primary" id="createNotice">+ 직접 공지 작성</button></div>
+      <div id="noticeList" class="cards"></div>
+    </section>
+
+    <section id="panel-history" class="panel">
+      <div class="section-head"><h2>전체 히스토리 및 아카이브</h2><button class="danger" id="resetHistory">🗑️ 전체 기록 초기화</button></div>
+      <div class="subtabs">
+        <button class="subtab active" data-subtab="keyLogs">열쇠 사용 이력</button>
+        <button class="subtab" data-subtab="closedVotes">종료된 투표 기록</button>
+      </div>
+      <div id="history-keyLogs" class="history-view">
+        <div class="table-wrap"><table><thead><tr><th>일시</th><th>사용자</th><th>구분</th><th>비고 / 이동 위치</th></tr></thead><tbody id="keyLogRows"></tbody></table></div>
+      </div>
+      <div id="history-closedVotes" class="history-view" hidden><div id="closedVotes" class="cards"></div></div>
+    </section>
+    <p class="hint">저장 안내: 이 HTML 버전은 SQLite 대신 현재 브라우저의 localStorage에 데이터를 저장합니다. 같은 파일을 다른 기기나 브라우저에서 열면 데이터가 자동으로 공유되지는 않습니다.</p>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <h2 id="modalTitle"></h2>
+      <div id="modalBody"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = 'clubSmartManager.v1';
+      const defaultData = {
+        members: ['김동아', '이회장', '박총무', '최신입'],
+        currentUser: '김동아', votes: [], notices: [],
+        keyStatus: { status: 'in_store', holder: '-', location: '동아리방 비밀번호 수납함', lastUpdated: now() },
+        keyLogs: [{ time: now(), user: '-', action: '반납', note: '동아리방 비밀번호 수납함' }]
+      };
+      function now() {
+        const d = new Date();
+        const p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+      }
+      function loadData() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (saved && Array.isArray(saved.members)) return { ...defaultData, ...saved };
+        } catch (e) { console.warn('저장 데이터를 읽지 못했습니다.', e); }
+        return structuredClone(defaultData);
+      }
+      let data = loadData();
+      if (!data.members.length) data.members = ['김동아'];
+      if (!data.members.includes(data.currentUser)) data.currentUser = data.members[0];
+      function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+      const $ = id => document.getElementById(id);
+      const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      const showModal = (title, body, actions) => {
+        $('modalTitle').textContent = title;
+        $('modalBody').innerHTML = body;
+        $('modalActions').innerHTML = '';
+        actions.forEach(({label, cls='subtle', onClick}) => {
+          const b = document.createElement('button'); b.textContent = label; b.className = cls;
+          b.addEventListener('click', onClick); $('modalActions').appendChild(b);
+        });
+        $('modalBackdrop').classList.add('show');
+      };
+      const closeModal = () => $('modalBackdrop').classList.remove('show');
+      const empty = text => `<div class="empty">${esc(text)}</div>`;
+
+      function renderMembers() {
+        const select = $('currentUser'); select.innerHTML = '';
+        data.members.forEach(name => {
+          const option = document.createElement('option'); option.value = name; option.textContent = name;
+          select.appendChild(option);
+        });
+        select.value = data.currentUser;
+      }
+      function renderVotes() {
+        const root = $('activeVotes');
+        const active = data.votes.filter(v => v.status === 'active').sort((a,b) => b.id-a.id);
+        if (!active.length) { root.innerHTML = empty('현재 진행 중인 투표가 없습니다.'); return; }
+        root.innerHTML = active.map(v => {
+          const voters = [...new Set(v.ballots.map(b => b.user))];
+          const my = v.ballots.filter(b => b.user === data.currentUser).map(b => b.optionId);
+          const total = voters.length;
+          const opts = v.options.map(o => {
+            const names = v.ballots.filter(b => b.optionId === o.id).map(b => b.user);
+            const count = names.length; const pct = total ? Math.round(count / total * 100) : 0;
+            const input = v.type === 'single'
+              ? `<input type="radio" name="vote-${v.id}" value="${o.id}" ${my.includes(o.id)?'checked':''}>`
+              : `<input type="checkbox" name="vote-${v.id}" value="${o.id}" ${my.includes(o.id)?'checked':''}>`;
+            return `<div class="option-row"><label class="option-label">${input}<span>${esc(o.text)}</span></label><span class="vote-count">${count}표 (${pct}%)${names.length ? ` · 참여: ${esc(names.join(', '))}` : ''}</span></div>`;
+          }).join('');
+          return `<article class="card" data-vote-card="${v.id}">
+            <div class="meta">${v.type==='single'?'단일 선택':'복수 선택'} · 상위 ${v.winnersCount}개 선정 · 생성자: ${esc(v.createdBy)} (${esc(v.createdAt)})</div>
+            <h3>${esc(v.title)}</h3>${v.description?`<p class="description">${esc(v.description)}</p>`:''}
+            <div>${opts}</div>
+            <div class="card-actions"><strong class="meta" style="margin:0">총 참여 부원: ${total}명</strong>
+              <div class="action-group"><button class="primary" data-submit-vote="${v.id}">투표하기</button><button class="dark" data-close-vote="${v.id}">투표 마감</button></div>
+            </div></article>`;
+        }).join('');
+      }
+      function renderKey() {
+        const k = data.keyStatus;
+        $('keyStatus').textContent = k.status === 'in_store' ? '🟢 상태: 동아리방 보관 중' : '🟡 상태: 부원 사용 중';
+        $('keyStatus').style.color = k.status === 'in_store' ? '#059669' : '#d97706';
+        const latest = [...data.keyLogs].reverse().find(log => log.action === '수령');
+        const recentUser = latest ? latest.user : (k.holder || '없음');
+        $('keyInfo').textContent = `보관 / 이동 장소: ${k.location}\n현재 수령자: ${k.holder}\n🔑 최근 열쇠 사용자: ${recentUser}\n최근 변경 일시: ${k.lastUpdated}`;
+      }
+      function renderNotices() {
+        const root = $('noticeList');
+        const list = [...data.notices].sort((a,b) => b.id-a.id);
+        root.innerHTML = list.length ? list.map(n => `<article class="card notice ${n.isAuto?'auto':''}">
+          <div class="meta">작성자: ${esc(n.author)} · ${esc(n.date)}</div><h3>${esc(n.title)}</h3><div class="notice-content">${esc(n.content)}</div>
+        </article>`).join('') : empty('등록된 공지사항이 없습니다.');
+      }
+      function renderHistory() {
+        const rows = [...data.keyLogs].reverse();
+        $('keyLogRows').innerHTML = rows.length ? rows.map(log => `<tr><td>${esc(log.time)}</td><td>${esc(log.user)}</td><td>${esc(log.action)}</td><td>${esc(log.note)}</td></tr>`).join('') : '<tr><td colspan="4" class="muted">열쇠 사용 이력이 없습니다.</td></tr>';
+        const closed = data.votes.filter(v => v.status === 'closed').sort((a,b)=>b.id-a.id);
+        $('closedVotes').innerHTML = closed.length ? closed.map(v => `<article class="card"><div class="meta">마감일: ${esc(v.closedAt)} · 생성자: ${esc(v.createdBy)}</div><h3>${esc(v.title)}</h3><span class="winner">🏆 최종 선정 결과: ${esc(v.winners || '선정 결과 없음')}</span></article>`).join('') : empty('종료된 투표 기록이 없습니다.');
+      }
+      function renderAll() { renderMembers(); renderVotes(); renderKey(); renderNotices(); renderHistory(); }
+
+      document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === button));
+        document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${button.dataset.tab}`));
+      }));
+      document.querySelectorAll('.subtab').forEach(button => button.addEventListener('click', () => {
+        document.querySelectorAll('.subtab').forEach(b => b.classList.toggle('active', b === button));
+        document.querySelectorAll('.history-view').forEach(v => v.hidden = v.id !== `history-${button.dataset.subtab}`);
+      }));
+      $('currentUser').addEventListener('change', e => { data.currentUser = e.target.value; save(); renderVotes(); });
+      $('addMember').addEventListener('click', () => showModal('부원 추가', '<div class="field"><label for="memberName">추가할 새 부원의 이름</label><input id="memberName" maxlength="40" placeholder="이름을 입력하세요"></div>', [
+        {label:'취소', onClick:closeModal}, {label:'추가', cls:'primary', onClick:() => {
+          const name = $('memberName').value.trim();
+          if (!name) return alert('이름을 입력해 주세요.');
+          if (data.members.includes(name)) return alert('이미 등록된 부원 이름입니다.');
+          data.members.push(name); save(); closeModal(); renderMembers();
+        }}
+      ]));
+      $('removeMember').addEventListener('click', () => {
+        if (data.members.length <= 1) return alert('최소 1명 이상의 부원이 등록되어 있어야 합니다.');
+        if (!confirm(`정말로 '${data.currentUser}' 부원을 삭제하시겠습니까?`)) return;
+        data.members = data.members.filter(m => m !== data.currentUser);
+        data.currentUser = data.members[0]; save(); renderAll();
+      });
+
+      $('createVote').addEventListener('click', () => showModal('새 투표 만들기', `
+        <div class="field"><label for="voteTitle">투표 주제</label><input id="voteTitle" maxlength="120"></div>
+        <div class="field"><label for="voteDescription">설명 (선택)</label><input id="voteDescription" maxlength="250"></div>
+        <div class="inline-fields"><div class="field"><label for="voteType">선택 방식</label><select id="voteType"><option value="single">단일 선택</option><option value="multiple">복수 선택</option></select></div>
+        <div class="field"><label for="winnerCount">당선 개수</label><input id="winnerCount" type="number" min="1" max="5" value="1"></div></div>
+        <div class="field"><label for="voteOptions">투표 항목 (줄바꿈으로 구분)</label><textarea id="voteOptions" placeholder="항목 1&#10;항목 2"></textarea></div>`, [
+        {label:'취소', onClick:closeModal}, {label:'투표 생성', cls:'primary', onClick:() => {
+          const title = $('voteTitle').value.trim(), description = $('voteDescription').value.trim();
+          const options = $('voteOptions').value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+          const type = $('voteType').value, winnersCount = Number($('winnerCount').value);
+          if (!title || options.length < 2) return alert('투표 제목과 최소 2개 이상의 항목을 입력하세요.');
+          if (!Number.isInteger(winnersCount) || winnersCount < 1 || winnersCount > 5) return alert('당선 개수는 1~5 사이로 입력해 주세요.');
+          const vote = { id: Date.now(), title, description, type, winnersCount, status:'active', createdBy:data.currentUser, createdAt:now(), closedAt:'', winners:'', options:options.map((text,i)=>({id:Date.now()+i+1,text})), ballots:[] };
+          data.votes.push(vote); save(); closeModal(); renderVotes();
+        }}
+      ]));
+      $('activeVotes').addEventListener('click', e => {
+        const submit = e.target.closest('[data-submit-vote]');
+        const close = e.target.closest('[data-close-vote]');
+        if (submit) {
+          const id = Number(submit.dataset.submitVote), vote = data.votes.find(v=>v.id===id);
+          const card = submit.closest('[data-vote-card]');
+          const selected = [...card.querySelectorAll(`input[name="vote-${id}"]:checked`)].map(input=>Number(input.value));
+          if (vote.type === 'single' && selected.length !== 1) return alert('투표 항목을 하나 선택해 주세요.');
+          vote.ballots = vote.ballots.filter(b=>b.user !== data.currentUser);
+          selected.forEach(optionId=>vote.ballots.push({user:data.currentUser,optionId}));
+          save(); renderVotes(); alert('투표가 성공적으로 저장되었습니다.');
+        }
+        if (close) {
+          const id = Number(close.dataset.closeVote), vote = data.votes.find(v=>v.id===id);
+          const counts = vote.options.map(o=>({text:o.text,count:vote.ballots.filter(b=>b.optionId===o.id).length})).sort((a,b)=>b.count-a.count);
+          const winners = counts.slice(0,vote.winnersCount).filter(x=>x.count>0).map(x=>x.text);
+          vote.winners = winners.length ? winners.join(', ') : '선정 결과 없음';
+          vote.status = 'closed'; vote.closedAt = now();
+          data.notices.push({id:Date.now(), title:`📢 [투표결과] ${vote.title}`, content:`투표 결과 상위 ${vote.winnersCount}개 항목인\n[ ${vote.winners} ] (이)가 최종 결정되었습니다.`, author:'시스템 자동 공지', date:vote.closedAt, isAuto:true});
+          save(); renderAll(); alert(`투표가 마감되었으며 결과가 공지사항에 자동 게시되었습니다.\n\n최종 결과: ${vote.winners}`);
+        }
+      });
+
+      $('checkoutKey').addEventListener('click', () => showModal('열쇠 수령 등록', `
+        <div class="field"><label for="keyUser">열쇠 사용자 이름</label><input id="keyUser" value="${esc(data.currentUser)}"></div>
+        <div class="field"><label for="keyLocation">보관 / 이동 위치</label><input id="keyLocation" value="개인 가방 보관"></div>`, [
+        {label:'취소', onClick:closeModal}, {label:'수령 등록 완료', cls:'primary', onClick:() => {
+          const user = $('keyUser').value.trim(), location = $('keyLocation').value.trim();
+          if (!user || !location) return alert('사용자 이름과 위치를 모두 입력해 주세요.');
+          const time = now(); data.keyStatus = {status:'in_use',holder:user,location,lastUpdated:time};
+          data.keyLogs.push({time,user,action:'수령',note:location}); save(); closeModal(); renderKey(); renderHistory(); alert(`열쇠 수령이 완료되었습니다.\n(사용자: ${user} / 위치: ${location})`);
+        }}
+      ]));
+      $('returnKey').addEventListener('click', () => {
+        const time = now(), user = data.currentUser, location = '동아리방 비밀번호 수납함';
+        data.keyStatus = {status:'in_store',holder:user,location,lastUpdated:time};
+        data.keyLogs.push({time,user,action:'반납',note:location}); save(); renderKey(); renderHistory(); alert('열쇠가 동아리방 수납함에 반납 처리되었습니다.');
+      });
+
+      $('createNotice').addEventListener('click', () => showModal('새 공지 작성', `
+        <div class="field"><label for="noticeTitle">공지 제목</label><input id="noticeTitle" maxlength="120"></div>
+        <div class="field"><label for="noticeContent">공지 내용</label><textarea id="noticeContent"></textarea></div>`, [
+        {label:'취소', onClick:closeModal}, {label:'공지 등록', cls:'primary', onClick:() => {
+          const title=$('noticeTitle').value.trim(), content=$('noticeContent').value.trim();
+          if (!title || !content) return alert('제목과 내용을 입력해주세요.');
+          data.notices.push({id:Date.now(),title,content,author:data.currentUser,date:now(),isAuto:false});
+          save(); closeModal(); renderNotices(); alert('공지사항이 등록되었습니다.');
+        }}
+      ]));
+      $('resetHistory').addEventListener('click', () => {
+        if (!confirm('정말로 열쇠 이력, 종료된 투표 및 공지사항 전체 기록을 초기화하시겠습니까?\n\n이 작업은 복구할 수 없습니다.')) return;
+        data.keyLogs = []; data.notices = []; data.votes = data.votes.filter(v=>v.status !== 'closed');
+        save(); renderAll(); alert('모든 기록이 성공적으로 초기화되었습니다.');
+      });
+      $('modalBackdrop').addEventListener('click', e => { if (e.target === $('modalBackdrop')) closeModal(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+      save(); renderAll();
+    })();
+  </script>
+</body>
+</html>
